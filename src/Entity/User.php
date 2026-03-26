@@ -6,9 +6,11 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -62,7 +64,6 @@ class User
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -74,14 +75,17 @@ class User
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->email;
     }
 
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
         return array_unique($roles);
     }
@@ -89,7 +93,6 @@ class User
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
@@ -101,7 +104,6 @@ class User
     public function setDateInscription(\DateTimeImmutable $dateInscription): static
     {
         $this->dateInscription = $dateInscription;
-
         return $this;
     }
 
@@ -113,7 +115,6 @@ class User
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
@@ -131,19 +132,16 @@ class User
             $this->events->add($event);
             $event->setCreator($this);
         }
-
         return $this;
     }
 
     public function removeEvent(Event $event): static
     {
         if ($this->events->removeElement($event)) {
-            // set the owning side to null (unless already changed)
             if ($event->getCreator() === $this) {
                 $event->setCreator(null);
             }
         }
-
         return $this;
     }
 
@@ -161,19 +159,21 @@ class User
             $this->media->add($medium);
             $medium->setAuthor($this);
         }
-
         return $this;
     }
 
     public function removeMedium(Media $medium): static
     {
         if ($this->media->removeElement($medium)) {
-            // set the owning side to null (unless already changed)
             if ($medium->getAuthor() === $this) {
                 $medium->setAuthor(null);
             }
         }
-
         return $this;
+    }
+
+    public function eraseCredentials(): void
+    {
+        // If you store temporary sensitive data, clear it here
     }
 }

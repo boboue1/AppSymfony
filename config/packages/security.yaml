@@ -1,4 +1,5 @@
 security:
+    # See https://symfony.com/doc/current/security.html for more details.
     password_hashers:
         App\Entity\User:
             algorithm: auto
@@ -9,40 +10,34 @@ security:
                 class: App\Entity\User
                 property: email
 
+    # firewallls define how users are authenticated and how to handle unauthenticated requests
     firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
 
-        # Login JWT
         login:
             pattern: ^/api/login
             stateless: true
+            provider: app_user_provider
             json_login:
                 check_path: /api/login
                 username_path: email
                 password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        # Firewall pour les routes API sécurisées  API
         api:
             pattern: ^/api
             stateless: true
-            provider: app_user_provider
             jwt: ~
 
-        #Firewall pour la déconnexion
-        logout:
-            pattern: ^/api/logout
-            stateless: true
-            
-        # Firewall obligatoire même si non utilisé
-        main:
-            lazy: true
-            provider: app_user_provider
-
     access_control:
-        # Autoriser login
-        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-
-        # Admin uniquement
-        - { path: ^/api/users$, roles: ROLE_ADMIN }
-
-        # Toutes les autres routes API nécessitent un token
+            #Routes d'accès pour les différentes parties de l'API
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+            #Docs de l'API accessibles à tous
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+            #Admin uniquement pour la gestion des utilisateurs
+        - { path: ^/api/users$, roles: ROLE_ADMIN, methods: [GET] }
+            #Toutes les autres routes de l'API nécessitent une authentification complète
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
