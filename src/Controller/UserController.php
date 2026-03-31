@@ -14,23 +14,55 @@ use Symfony\Component\Routing\Attribute\Route;
 final class UserController extends AbstractController
 {
     /**
+     * Retourne les informations de l'utilisateur actuellement connecté
+     * Accessible à tous les utilisateurs authentifiés (ROLE_USER et ROLE_ADMIN)
+     */
+    #[Route('/api/users/me', name: 'api_users_me', methods: ['GET'])]
+    public function me(User $user): JsonResponse
+    {
+        $data = [
+            'id'               => $user->getId(),
+            'nom'              => $user->getNom(),
+            'email'            => $user->getEmail(),
+            'roles'            => $user->getRoles(),
+            'date_inscription' => $user->getDateInscription()?->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($data, JsonResponse::HTTP_OK);
+    }
+
+
+    /**
      * Liste tous les utilisateurs
      * Accessible uniquement aux administrateurs (ROLE_ADMIN)
      */
     #[Route('/api/users', name: 'api_users_list', methods: ['GET'])]
     public function index(UserRepository $repository): JsonResponse
     {
-        $users = $repository->findAll();
+        /** @var User|null $currentUser */
+        $currentUser = $this->getUser();
 
-        $data = array_map(function (User $user) {
-            return [
-                'id'               => $user->getId(),
-                'nom'              => $user->getNom(),
-                'email'            => $user->getEmail(),
-                'roles'            => $user->getRoles(),
-                'date_inscription' => $user->getDateInscription()?->format('Y-m-d H:i:s'),
-            ];
-        }, $users);
+        //commentaire pour expliquer la vérification de l'utilisateur connecté
+        if (!$currentUser instanceof User) {
+            return new JsonResponse(['error' => 'Utilisateur non authentifié'], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+
+        // Récupérer tous les utilisateurs SAUF l'utilisateur connecté
+        $users = $repository->createQueryBuilder('u')
+            ->where('u != :current')
+            ->setParameter('current', $currentUser)
+            ->getQuery()
+            ->getResult();
+
+        // Transformer les données
+        $data = array_map(fn(User $user) =>
+             [
+            'id'               => $user->getId(),
+            'nom'              => $user->getNom(),
+            'email'            => $user->getEmail(),
+            'roles'            => $user->getRoles(),
+            'date_inscription' => $user->getDateInscription()?->format('Y-m-d H:i:s'),
+        ], $users);
 
         return new JsonResponse($data, JsonResponse::HTTP_OK);
     }

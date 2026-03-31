@@ -41,5 +41,7 @@ security:
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
             #Admin uniquement pour la gestion des utilisateurs
         - { path: ^/api/users$, roles: ROLE_ADMIN, methods: [GET] }
+        #utilisateurs spécifiques accessibles à l'admin pour la gestion
+        - { path: ^/api/users, roles: ROLE_ADMIN, methods: [GET, PUT, DELETE] }
             #Toutes les autres routes de l'API nécessitent une authentification complète
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
