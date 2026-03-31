@@ -35,6 +35,8 @@ security:
     access_control:
             #Routes d'accès pour les différentes parties de l'API
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+            #Route d'inscription accessible à tous
+        - { path: ^/api/register, roles: PUBLIC_ACCESS }
             #Docs de l'API accessibles à tous
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
             #Admin uniquement pour la gestion des utilisateurs

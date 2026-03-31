@@ -16,6 +16,12 @@ user_create:
         controller: App\Controller\UserController::create
         methods: [POST] 
 
+# Route pour inscrire un nouvel utilisateur
+user_register:
+        path: /api/register
+        controller: App\Controller\UserController::register
+        methods: [POST]
+
 # Route pour mettre à jour un utilisateur existant
 user_update:
         path: /api/users/{id}

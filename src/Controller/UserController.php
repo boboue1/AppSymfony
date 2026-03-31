@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use App\Entity\User;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -109,5 +110,31 @@ public function update(Request $request, User $user, EntityManagerInterface $em)
 
         return new JsonResponse(['message' => 'Utilisateur supprimé avec succès'], JsonResponse::HTTP_OK);
     }
-}
 
+    #[Route ('/api/register', name: 'api_users_register', methods: ['POST'])]
+    public function register(
+        Request $request, EntityManagerInterface $em, 
+        UserPasswordHasherInterface $passwordHasher
+    ) : JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        // Validation basique des données
+        if (empty($data['nom']) || empty($data['email']) || empty($data['password'])) {
+            return new JsonResponse(['message' => 'Nom, email et mot de passe sont requis'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        $user = new User();
+        $user->setNom($data['nom']);
+        $user->setEmail($data['email']);
+        $user->setRoles($data['roles'] ?? ['ROLE_USER']);
+        $user->setDateInscription(new \DateTimeImmutable());
+
+        // Hacher le mot de passe
+        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
+
+        $em->persist($user);
+        $em->flush();
+
+        return new JsonResponse(['message' => 'Inscription réussie'], JsonResponse::HTTP_CREATED);
+    }
+    }
