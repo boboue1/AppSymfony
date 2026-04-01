@@ -18,8 +18,14 @@ final class UserController extends AbstractController
      * Accessible à tous les utilisateurs authentifiés (ROLE_USER et ROLE_ADMIN)
      */
     #[Route('/api/users/me', name: 'api_users_me', methods: ['GET'])]
-    public function me(User $user): JsonResponse
+    public function me(): JsonResponse
     {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse(['error' => 'Utilisateur non authentifié'], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+
         $data = [
             'id'               => $user->getId(),
             'nom'              => $user->getNom(),
